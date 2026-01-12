@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Overflow.AppHost", "Overflow.AppHost\Overflow.AppHost.csproj", "{AE28B54B-FB11-432E-AED0-5A08E8D6BD8F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Overflow.ServiceDefaults", "Overflow.ServiceDefaults\Overflow.ServiceDefaults.csproj", "{001C80DC-F256-43F9-9F6D-D2CA5CBD29C8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "services", "services", "{9FBD7784-44BB-44EB-A4AA-DD15BC93300A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuestionService", "QuestionService\QuestionService.csproj", "{9E9FCA72-0FAF-4227-BE19-8A6D4DA10382}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchService", "SearchService\SearchService.csproj", "{D6C3D625-5552-455D-AA3D-1AE9B6AFD6DE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AE28B54B-FB11-432E-AED0-5A08E8D6BD8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE28B54B-FB11-432E-AED0-5A08E8D6BD8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE28B54B-FB11-432E-AED0-5A08E8D6BD8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE28B54B-FB11-432E-AED0-5A08E8D6BD8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{001C80DC-F256-43F9-9F6D-D2CA5CBD29C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{001C80DC-F256-43F9-9F6D-D2CA5CBD29C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{001C80DC-F256-43F9-9F6D-D2CA5CBD29C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{001C80DC-F256-43F9-9F6D-D2CA5CBD29C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E9FCA72-0FAF-4227-BE19-8A6D4DA10382}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E9FCA72-0FAF-4227-BE19-8A6D4DA10382}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E9FCA72-0FAF-4227-BE19-8A6D4DA10382}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E9FCA72-0FAF-4227-BE19-8A6D4DA10382}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6C3D625-5552-455D-AA3D-1AE9B6AFD6DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6C3D625-5552-455D-AA3D-1AE9B6AFD6DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6C3D625-5552-455D-AA3D-1AE9B6AFD6DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6C3D625-5552-455D-AA3D-1AE9B6AFD6DE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9E9FCA72-0FAF-4227-BE19-8A6D4DA10382} = {9FBD7784-44BB-44EB-A4AA-DD15BC93300A}
+		{D6C3D625-5552-455D-AA3D-1AE9B6AFD6DE} = {9FBD7784-44BB-44EB-A4AA-DD15BC93300A}
+	EndGlobalSection
+EndGlobal
