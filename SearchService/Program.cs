@@ -90,6 +90,21 @@ app.MapGet("/search", async (string query, ITypesenseClient client) =>
     }
 });
 
+app.MapGet("/search/similar-titles", async (string query, ITypesenseClient client) =>
+{
+    var searchParams = new SearchParameters(query, "title");
+
+    try
+    {
+        var res = await client.Search<SearchQuestion>("questions", searchParams);
+        return Results.Ok(res.Hits.Select(hit => hit.Document));
+    }
+    catch (Exception e)
+    {
+        return Results.Problem("Search failed", e.Message);
+    }
+});
+
 using var scope = app.Services.CreateScope();
 var client = scope.ServiceProvider.GetRequiredService<ITypesenseClient>();
 await SearchInitializer.EnsureIndexExists(client);
