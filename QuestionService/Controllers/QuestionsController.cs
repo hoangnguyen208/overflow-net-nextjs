@@ -153,7 +153,8 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         {
             Content = dto.Content,
             UserId = userId,
-            QuestionId = questionId
+            QuestionId = questionId,
+            UserDisplayName = name
         };
         
         question.Answers.Add(answer);

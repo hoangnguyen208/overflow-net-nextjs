@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -61,6 +60,10 @@ var yarp = builder.AddYarp("gateway").WithConfiguration(yarpBuilder =>
     yarpBuilder.AddRoute("/tags/{**catch-all}", questionService);
     yarpBuilder.AddRoute("/search/{**catch-all}", searchService);
 });
+
+var webapp = builder.AddJavaScriptApp("webapp", "../webapp")
+    .WithReference(keycloak)
+    .WithHttpEndpoint(env: "PORT", port: 3000);
 
 if (builder.Environment.IsDevelopment())
 {
