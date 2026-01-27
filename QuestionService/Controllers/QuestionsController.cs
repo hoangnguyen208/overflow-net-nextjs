@@ -231,7 +231,7 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         {
             400 => BadRequest("This is a bad request"),
             401 => Unauthorized("This is an unauthorized"),
-            403 => Forbid("This is a forbidden"),
+            403 => Forbid(),
             404 => NotFound("This is a not found"),
             500 => Problem("This is an internal server error"),
             _ => ValidationProblem(ModelState)

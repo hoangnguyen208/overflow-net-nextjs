@@ -1,4 +1,6 @@
-﻿import {Answer} from "@/lib/types";
+﻿'use client'
+
+import {Answer} from "@/lib/types";
 import VotingButtons from "@/app/questions/[id]/VotingButtons";
 import AnswerFooter from "@/app/questions/[id]/AnswerFooter";
 
