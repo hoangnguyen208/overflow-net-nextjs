@@ -54,17 +54,23 @@ var searchService = builder.AddProject<Projects.SearchService>("search-svc")
     .WaitFor(typesense)
     .WaitFor(rabbitmq);
 
+#pragma warning disable ASPIRECERTIFICATES001
 var yarp = builder.AddYarp("gateway").WithConfiguration(yarpBuilder =>
 {
     yarpBuilder.AddRoute("/questions/{**catch-all}", questionService);
     yarpBuilder.AddRoute("/test/{**catch-all}", questionService);
     yarpBuilder.AddRoute("/tags/{**catch-all}", questionService);
     yarpBuilder.AddRoute("/search/{**catch-all}", searchService);
-});
+})
+.WithoutHttpsCertificate();
+#pragma warning restore ASPIRECERTIFICATES001
 
 var webapp = builder.AddJavaScriptApp("webapp", "../webapp")
     .WithReference(keycloak)
-    .WithHttpEndpoint(env: "PORT", port: 3000);
+    .WithHttpEndpoint(env: "PORT", port: 3000, targetPort: 4000)
+    .WithEnvironment("VIRTUAL_HOST", "app.overflow.local")
+    .WithEnvironment("VIRTUAL_PORT", "4000")
+    .PublishAsDockerFile();
 
 if (builder.Environment.IsDevelopment())
 {
@@ -79,7 +85,12 @@ else
 
     builder.AddContainer("nginx-proxy", "nginxproxy/nginx-proxy", "1.9")
         .WithEndpoint(80, 80, "nginx", isExternal: true)
-        .WithBindMount("/var/run/docker.sock", "/tmp/docker.sock", true);
+        .WithEndpoint(443, 443, "nginx-ssl", isExternal: true)
+        .WithBindMount("/var/run/docker.sock", "/tmp/docker.sock", true)
+        .WithBindMount("../infra/devcerts", "/etc/nginx/certs", true);
+
+    keycloak.WithEnvironment("KC_HOSTNAME", "https://id.overflow.local")
+        .WithEnvironment("KC_HOSTNAME_BACKCHANNEL_DYNAMIC", "true");
 }
 
 builder.Build().Run();
