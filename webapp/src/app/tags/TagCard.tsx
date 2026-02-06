@@ -1,4 +1,6 @@
-﻿import React from 'react'
+﻿'use client'
+
+import React from 'react'
 import {Card, CardBody, CardFooter, CardHeader} from "@heroui/card";
 import {Tag} from "@/lib/types";
 import {Chip} from "@heroui/chip";

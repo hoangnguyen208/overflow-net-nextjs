@@ -1,4 +1,6 @@
-﻿import {Button} from "@heroui/button";
+﻿'use client'
+
+import {Button} from "@heroui/button";
 import {ArrowDownCircleIcon, ArrowUpCircleIcon, CheckIcon} from "@heroicons/react/24/outline";
 
 type Props = {
