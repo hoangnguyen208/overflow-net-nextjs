@@ -24,6 +24,7 @@ public static class AuthExtensions
                     ClockSkew = TimeSpan.Zero
                 };
             });
+        service.AddAuthorizationBuilder();
         return service;
     }
 }

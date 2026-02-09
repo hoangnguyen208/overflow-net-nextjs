@@ -1,9 +1,4 @@
-﻿import {loadEnvConfig} from "@next/env";
-
-const projectDir = process.cwd();
-loadEnvConfig(projectDir);
-
-function getEnv(key: string) {
+﻿function getEnv(key: keyof NodeJS.ProcessEnv) {
     const value = process.env[key];
     if (!value) throw new Error(`Missing env var: ${key}`);
     return value;
