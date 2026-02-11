@@ -35,6 +35,8 @@ var typesenseContainer = typesense.GetEndpoint("typesense");
 
 var questionDb = postgres.AddDatabase("questionDb");
 var profileDb = postgres.AddDatabase("profileDb");
+var statsDb = postgres.AddDatabase("statsDb");
+var voteDb = postgres.AddDatabase("voteDb");
 
 var rabbitmq = builder.AddRabbitMQ("messaging")
     .WithDataVolume("rabbitmq-data")
@@ -63,6 +65,20 @@ var profileService = builder.AddProject<Projects.ProfileService>("profile-svc")
     .WaitFor(profileDb)
     .WaitFor(rabbitmq);
 
+var statsService = builder.AddProject<Projects.StatsService>("stats-svc")
+    .WithReference(statsDb)
+    .WithReference(rabbitmq)
+    .WaitFor(statsDb)
+    .WaitFor(rabbitmq);
+
+var voteService = builder.AddProject<Projects.VoteService>("vote-svc")
+    .WithReference(keycloak)
+    .WithReference(voteDb)
+    .WithReference(rabbitmq)
+    .WaitFor(keycloak)
+    .WaitFor(voteDb)
+    .WaitFor(rabbitmq);
+
 #pragma warning disable ASPIRECERTIFICATES001
 var yarp = builder.AddYarp("gateway").WithConfiguration(yarpBuilder =>
 {
@@ -71,6 +87,8 @@ var yarp = builder.AddYarp("gateway").WithConfiguration(yarpBuilder =>
     yarpBuilder.AddRoute("/tags/{**catch-all}", questionService);
     yarpBuilder.AddRoute("/search/{**catch-all}", searchService);
     yarpBuilder.AddRoute("/profiles/{**catch-all}", profileService);
+    yarpBuilder.AddRoute("/stats/{**catch-all}", statsService);
+    yarpBuilder.AddRoute("/votes/{**catch-all}", voteService);
 })
 .WithoutHttpsCertificate();
 #pragma warning restore ASPIRECERTIFICATES001

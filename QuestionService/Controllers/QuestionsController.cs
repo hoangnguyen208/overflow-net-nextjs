@@ -9,6 +9,7 @@ using QuestionService.Data;
 using QuestionService.DTOs;
 using QuestionService.Models;
 using QuestionService.Services;
+using Reputation;
 using Wolverine;
 
 namespace QuestionService.Controllers;
@@ -46,6 +47,15 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
 
         db.Questions.Add(question);
         await db.SaveChangesAsync();
+        
+        var slugs = question.TagSlugs.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+
+        if (slugs.Length > 0)
+        {
+            await db.Tags
+                .Where(t => slugs.Contains(t.Slug))
+                .ExecuteUpdateAsync(x => x.SetProperty(t => t.UsageCount, t => t.UsageCount + 1));
+        }
         
         await bus.PublishAsync(new QuestionCreated(question.Id, question.Title, question.Content, question.CreatedAt, question.TagSlugs));
 
@@ -101,6 +111,12 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         {
             return BadRequest("Invalid tags");
         }
+        
+        var original = question.TagSlugs.Distinct(StringComparer.OrdinalIgnoreCase).AsArray();
+        var incoming = dto.Tags.Distinct(StringComparer.OrdinalIgnoreCase).AsArray();
+        
+        var removed = original.Except(incoming, StringComparer.OrdinalIgnoreCase).ToArray();
+        var added = incoming.Except(original, StringComparer.OrdinalIgnoreCase).ToArray();
 
         var sanitizer = new HtmlSanitizer();
         
@@ -110,6 +126,20 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         question.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
+
+        if (removed.Length > 0)
+        {
+            await db.Tags
+                .Where(t => removed.AsEnumerable().Contains(t.Slug) && t.UsageCount > 0)
+                .ExecuteUpdateAsync(x => x.SetProperty(t => t.UsageCount, t => t.UsageCount - 1));
+        }
+
+        if (added.Length > 0)
+        {
+            await db.Tags
+                .Where(t => added.AsEnumerable().Contains(t.Slug))
+                .ExecuteUpdateAsync(x => x.SetProperty(t => t.UsageCount, t => t.UsageCount + 1));
+        }
         
         await bus.PublishAsync(new QuestionUpdated(question.Id, question.Title, question.Content, question.TagSlugs.AsArray()));
         
@@ -224,6 +254,7 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         await db.SaveChangesAsync();
         
         await bus.PublishAsync(new AnswerAccepted(questionId));
+        await bus.PublishAsync(ReputationHelper.MakeEvent(answer.UserId, ReputationReason.AnswerAccepted, question.AskerId));
         
         return NoContent();
     }

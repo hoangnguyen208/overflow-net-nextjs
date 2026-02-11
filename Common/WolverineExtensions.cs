@@ -52,7 +52,10 @@ public static class WolverineExtensions
         
         builder.UseWolverine(opts =>
         {
-            opts.UseRabbitMqUsingNamedConnection("messaging").AutoProvision().UseConventionalRouting();
+            opts.UseRabbitMqUsingNamedConnection("messaging").AutoProvision().UseConventionalRouting(x =>
+            {
+                x.QueueNameForListener(t => $"{t.FullName}." + $"{builder.Environment.ApplicationName}");
+            });
             configure(opts);
         });
     }
