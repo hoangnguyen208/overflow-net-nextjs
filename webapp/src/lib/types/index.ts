@@ -73,3 +73,17 @@ export type TopUser = {
 }
 
 export type TopUserWithProfile = TopUser & {profile: Profile}
+
+export type PaginatedResult<T> = {
+    items: T[]
+    totalCount: number
+    page: number
+    pageSize: number
+}
+
+export type QuestionParams = {
+    tag?: string
+    page?: number
+    pageSize?: number
+    sort?: string
+}

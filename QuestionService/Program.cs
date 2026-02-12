@@ -1,7 +1,10 @@
 using Common;
+using Contract;
 using Microsoft.EntityFrameworkCore;
 using QuestionService.Data;
 using QuestionService.Services;
+using Wolverine.EntityFrameworkCore;
+using Wolverine.Postgresql;
 using Wolverine.RabbitMQ;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,11 +19,17 @@ builder.Services.AddMemoryCache();
 builder.Services.AddScoped<TagService>();
 builder.Services.AddKeyCloakAuthentication();
 
-builder.AddNpgsqlDbContext<QuestionDbContext>("questionDb");
+var connectionString = builder.Configuration.GetConnectionString("questionDb");
+builder.Services.AddDbContext<QuestionDbContext>(options => options.UseNpgsql(connectionString), optionsLifetime: ServiceLifetime.Singleton);
 
 await builder.UseWolverineWithRabbitMqAsync(options =>
 {
     options.ApplicationAssembly = typeof(Program).Assembly;
+    options.PersistMessagesWithPostgresql(connectionString!);
+    options.UseEntityFrameworkCoreTransactions();
+    options.PublishMessage<QuestionCreated>().ToRabbitExchange("Contracts.QuestionCreated").UseDurableOutbox();
+    options.PublishMessage<QuestionUpdated>().ToRabbitExchange("Contracts.QuestionUpdated").UseDurableOutbox();
+    options.PublishMessage<QuestionDeleted>().ToRabbitExchange("Contracts.QuestionDeleted").UseDurableOutbox();
 });
 
 var app = builder.Build();
@@ -35,17 +44,6 @@ app.MapControllers();
 
 app.MapDefaultEndpoints();
 
-using var scope = app.Services.CreateScope();
-var services = scope.ServiceProvider;
-try
-{
-    var context = services.GetRequiredService<QuestionDbContext>();
-    await context.Database.MigrateAsync();
-}
-catch (Exception e)
-{
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(e, "An error occurred while migrating the database.");
-}
+await app.MigrateDbContextsAsync<QuestionDbContext>();
 
 app.Run();

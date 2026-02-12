@@ -79,17 +79,6 @@ app.MapPut("/profiles/edit", async (EditProfileDto dto, ClaimsPrincipal user,
     return Results.NoContent();
 }).RequireAuthorization();
 
-using var scope = app.Services.CreateScope();
-var services = scope.ServiceProvider;
-try
-{
-    var context = services.GetRequiredService<ProfileDbContext>();
-    await context.Database.MigrateAsync();
-}
-catch (Exception e)
-{
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(e, "An error occurred while migrating the database.");
-}
+await app.MigrateDbContextsAsync<ProfileDbContext>();
 
 app.Run();

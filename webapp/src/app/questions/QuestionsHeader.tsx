@@ -4,6 +4,9 @@ import {Button} from "@heroui/button";
 import Link from "next/link";
 import {Tab, Tabs} from "@heroui/tabs";
 import {useTagStore} from "@/lib/hooks/useTagStore";
+import {useRouter} from "next/dist/client/components/navigation";
+import {useSearchParams} from "next/navigation";
+import {Key} from "@react-types/shared";
 
 type Props = {
     tag?: string;
@@ -11,12 +14,20 @@ type Props = {
 }
 
 export default function QuestionsHeader({tag, total}: Props) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const selectedTag = useTagStore(state => state.getTagBySlug(tag ?? ''));
     const tabs = [
         {key: 'newsest', label: 'Newest'},
         {key: 'active', label: 'Active'},
         {key: 'unanswered', label: 'Unanswered'}
     ];
+    const selected = searchParams.get('sort') || 'newsest';
+    const onChange = (key: Key) => {
+        const params = new URLSearchParams(searchParams);
+        params.set('sort', key.toString());
+        router.push(`?${params.toString()}`, {scroll: false});       
+    }
     
     return (
         <div className='flex flex-col w-full border-b gap-4 pb-4'>
@@ -31,7 +42,10 @@ export default function QuestionsHeader({tag, total}: Props) {
                 <div>{total} {total === 1 ? 'Question' : 'Questions'}</div>
 
                 <div className='flex items-center'>
-                    <Tabs>
+                    <Tabs
+                        selectedKey={selected}
+                        onSelectionChange={onChange}
+                    >
                         {tabs.map((item) => (
                             <Tab key={item.key} title={item.label} />
                         ))}
