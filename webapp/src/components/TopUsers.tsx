@@ -1,9 +1,7 @@
 ﻿import {getTopUsers} from "@/lib/actions/profile-actions";
-import {handleError} from "@/lib/util";
 
 export default async function TopUsers() {
     const {data: users, error} = await getTopUsers();
-    if (error) handleError(error);
     
     return (
         <div className='bg-primary-50 p-6 rounded-2xl'>

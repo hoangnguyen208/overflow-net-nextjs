@@ -42,11 +42,11 @@ export async function fetchClient<T>(
     }
 
     if (!response.ok) {
-        console.log(response.status);
+        console.log(response);
         if (response.status === 404) return notFound();
-        if (response.status === 500) {
-            throw new Error('Internal Server Error');
-        }
+        // if (response.status === 500) {
+        //     throw new Error('Internal Server Error');
+        // }
         
         let message = '';
         

@@ -19,7 +19,7 @@ await builder.UseWolverineWithRabbitMqAsync(options =>
 {
     options.ApplicationAssembly = typeof(Program).Assembly;
 });
-builder.AddNpgsqlDbContext<VoteDbContext>("voteDb");
+builder.AddAzureNpgsqlDbContext<VoteDbContext>("voteDb");
 
 var app = builder.Build();
 

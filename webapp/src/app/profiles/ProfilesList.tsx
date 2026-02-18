@@ -32,7 +32,7 @@ export default function ProfilesList({profiles}: Props) {
             onSortChange={(sort) => onSortChange(sort)}
             aria-label='User profiles'
             selectionMode='single'
-            onRowAction={(key) => router.push(`/profiles/${key}`)}
+            onRowAction={(key) => router.push(`/profiles/${String(key)}`)}
         >
              <TableHeader columns={columns}>
                  {(column) =>

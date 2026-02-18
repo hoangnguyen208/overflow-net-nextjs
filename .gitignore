@@ -3,5 +3,10 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+/infra/.env
 /infra/.env.Production
 /infra/realms/overflow-realm.json
+/infra/devcerts/*
+/infra/do/*
+/Overflow.AppHost/aspire-output/*
+.azure

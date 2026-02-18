@@ -2,25 +2,26 @@ using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-var compose = builder.AddDockerComposeEnvironment("production")
-    .WithDashboard(dashboard => dashboard.WithHostPort(8080));
+var kcPort = builder.ExecutionContext.IsPublishMode ? 80 : 6001;
 
 #pragma warning disable ASPIRECERTIFICATES001
-var keycloak = builder.AddKeycloak("keycloak", 6001)
+var keycloak = builder.AddKeycloak("keycloak", kcPort)
+    .WithEndpoint("http", e => e.IsExternal = true)
     .WithoutHttpsCertificate()
 #pragma warning restore ASPIRECERTIFICATES001
     .WithDataVolume("keycloak-data")
-    .WithRealmImport("../infra/realms")
     .WithEnvironment("KC_HTTP_ENABLED", "true")
     .WithEnvironment("KC_HTTPS_ENABLED", "false")
     .WithEnvironment("KC_HOSTNAME_STRICT", "false")
     .WithEnvironment("KC_HOSTNAME_STRICT_HTTPS", "false")
-    .WithEnvironment("VIRTUAL_HOST", "id.overflow.local")
-    .WithEnvironment("VIRTUAL_PORT", "8080");
+    .WithEnvironment("KC_PROXY_HEADERS", "xforwarded");
 
-var postgres = builder.AddPostgres("postgres", port: 5432)
-    .WithDataVolume("postgres-data")
-    .WithPgWeb();
+
+var pgUser = builder.AddParameter("pg-username", secret: true);
+var pgPassword = builder.AddParameter("pg-password", secret: true);
+
+var postgres = builder.AddAzurePostgresFlexibleServer("postgres")
+    .WithPasswordAuthentication(pgUser, pgPassword);
 
 var typesenseApiKey = builder.AddParameter("typesense-api-key", secret: true);
 
@@ -39,7 +40,6 @@ var statsDb = postgres.AddDatabase("statsDb");
 var voteDb = postgres.AddDatabase("voteDb");
 
 var rabbitmq = builder.AddRabbitMQ("messaging")
-    .WithDataVolume("rabbitmq-data")
     .WithManagementPlugin(15672);
 
 var questionService = builder.AddProject<Projects.QuestionService>("question-svc")
@@ -95,30 +95,55 @@ var yarp = builder.AddYarp("gateway").WithConfiguration(yarpBuilder =>
 
 var webapp = builder.AddJavaScriptApp("webapp", "../webapp")
     .WithReference(keycloak)
-    .WithHttpEndpoint(env: "PORT", port: 3000, targetPort: 4000)
-    .WithEnvironment("VIRTUAL_HOST", "app.overflow.local")
-    .WithEnvironment("VIRTUAL_PORT", "4000")
+    .WithExternalHttpEndpoints()
     .PublishAsDockerFile();
 
-if (builder.Environment.IsDevelopment())
+if (builder.ExecutionContext.IsPublishMode)
 {
-    yarp.WithHostPort(8001);
+    rabbitmq.WithVolume("rabbitmq-data", "/var/lib/rabbitmq/mnesia");
+    webapp.WithEndpoint(env: "PORT", port: 80, targetPort: 4000, scheme: "http", isExternal: true);
 }
 else
 {
-    yarp.WithEnvironment("ASPNETCORE_URLS", "http://*:8001")
-        .WithEndpoint(port: 8001, scheme: "http", targetPort: 8001, name: "gateway", isExternal: true)
-        .WithEnvironment("VIRTUAL_HOST", "api.overflow.local")
-        .WithEnvironment("VIRTUAL_PORT", "8001");
+    postgres.RunAsContainer();
+    rabbitmq.WithDataVolume("rabbitmq-data");
+    webapp.WithHttpEndpoint(env: "PORT", port: 3000, targetPort: 4000);
+}
 
+if (builder.Environment.IsDevelopment())
+{
+    // yarp.WithHostPort(8001);
+    keycloak.WithRealmImport("../infra/realms");
+}
+else
+{
+    // Comment for Azure deployment, Digital Ocean worked though.
+    // ERROR: generating bicep from manifest: configuring ingress for resource gateway: Binding http can't be mapped to main ingress
+    // because it has port 8001 defined. main ingress only supports port 80 for http scheme.
+    // yarp.WithEnvironment("ASPNETCORE_URLS", "http://*:8001")
+    //     .WithEndpoint(port: 8001, scheme: "http", targetPort: 8001, name: "gateway", isExternal: true);
+
+    keycloak.WithEnvironment("KC_HOSTNAME", "https://overflow-id.torohng.site")
+        .WithEnvironment("KC_HOSTNAME_BACKCHANNEL_DYNAMIC", "true");
+    
     builder.AddContainer("nginx-proxy", "nginxproxy/nginx-proxy", "1.9")
         .WithEndpoint(80, 80, "nginx", isExternal: true)
         .WithEndpoint(443, 443, "nginx-ssl", isExternal: true)
         .WithBindMount("/var/run/docker.sock", "/tmp/docker.sock", true)
-        .WithBindMount("../infra/devcerts", "/etc/nginx/certs", true);
-
-    keycloak.WithEnvironment("KC_HOSTNAME", "https://id.overflow.local")
-        .WithEnvironment("KC_HOSTNAME_BACKCHANNEL_DYNAMIC", "true");
+        .WithVolume("certs", "/etc/nginx/certs", false)
+        // .WithBindMount("../infra/devcerts", "/etc/nginx/certs", true)
+        .WithVolume("html", "/usr/share/nginx/html", false)
+        .WithVolume("vhost", "/etc/nginx/vhost.d")
+        .WithContainerName("nginx-proxy");
+    
+    builder.AddContainer("nginx-proxy-acme", "nginxproxy/acme-companion", "2.2")
+        .WithEnvironment("DEFAULT_EMAIL", "hoangnguyen.vn208@gmail.com")
+        .WithEnvironment("NGINX_PROXY_CONTAINER", "nginx-proxy")
+        .WithBindMount("/var/run/docker.sock", "/var/run/docker.sock", isReadOnly: true)
+        .WithVolume("certs", "/etc/nginx/certs")
+        .WithVolume("html", "/usr/share/nginx/html")
+        .WithVolume("vhost", "/etc/nginx/vhost.d", false)
+        .WithVolume("acme", "/etc/acme.sh");
 }
 
 builder.Build().Run();
